@@ -1,0 +1,1 @@
+Send-MailMessage -SMTPServer smtp.olympus.gaia.kosmos -To patrick.vince@hyland.com -From noreply@hylandcloud.com -Subject "Email Test" -Body "This is a test message from pint-jump10"
