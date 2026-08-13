@@ -1,0 +1,1 @@
+get-adgroupmember -identity "GSG-IMUDEV-ADM" | select SamAccountName > c:\users\picklerick\documents\GSG-IMUDEV-ADM.txt

@@ -1,0 +1,1 @@
+Invoke-WebRequest -Uri "https://agenthub.citrixworkspacesapi.net" -Proxy "http://proxy:8080" -Method Head -Verbose
