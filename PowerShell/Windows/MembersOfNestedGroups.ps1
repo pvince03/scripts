@@ -1,0 +1,1 @@
+Get-adgroup "dlg-gcs-hv-la" | get-adgroupmember -recursive | get-aduser -properties * | select mail, CN, LastLogonDate | Export-Csv c:\test.csv -NoTypeInformation -Encoding UTF8

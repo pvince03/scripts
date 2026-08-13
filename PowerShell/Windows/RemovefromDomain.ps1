@@ -1,0 +1,1 @@
+Remove-Computer -UnjoinDomaincredential olympus\picklerick -PassThru -Verbose -Force -Restart
