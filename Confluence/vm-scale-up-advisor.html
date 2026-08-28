@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VM Scale-Up Advisor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg: #14171c;
+    --panel: #1b1f27;
+    --panel-2: #20242e;
+    --line: #2a2f3a;
+    --text: #edeff2;
+    --muted: #8b93a1;
+    --amber: #c9822e;
+    --amber-dim: #6b5231;
+    --green: #4c9a6a;
+    --green-dim: #2e4b3a;
+    --red: #b6484b;
+    --red-dim: #4b2e30;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+  }
+
+  body{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 48px 20px 80px;
+  }
+
+  .wrap{
+    width:100%;
+    max-width: 620px;
+  }
+
+  header{
+    margin-bottom: 32px;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:7px; height:7px;
+    border-radius:50%;
+    background: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+  }
+
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .sub{
+    color: var(--muted);
+    font-size: 14.5px;
+    line-height: 1.5;
+    max-width: 52ch;
+  }
+
+  /* trail */
+  .trail{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    margin-bottom: 4px;
+  }
+  .trail-item{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    padding: 10px 0;
+    border-left: 2px solid var(--line);
+    padding-left: 16px;
+    margin-left: 5px;
+    position:relative;
+  }
+  .trail-item::before{
+    content:'';
+    position:absolute;
+    left:-6px; top:14px;
+    width:9px; height:9px;
+    border-radius:50%;
+    background: var(--panel-2);
+    border: 2px solid var(--muted);
+  }
+  .trail-item .q{
+    font-size: 13px;
+    color: var(--muted);
+    flex:1;
+  }
+  .trail-item .a{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    white-space:nowrap;
+  }
+
+  /* card */
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 28px 26px;
+    margin-top: 18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:'';
+    position:absolute;
+    top:0; left:0; right:0;
+    height:3px;
+    background: linear-gradient(90deg, var(--amber), transparent 70%);
+  }
+
+  .step-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--amber);
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .info-note{
+    font-size: 13.5px;
+    color: var(--muted);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--amber);
+    border-radius: 6px;
+    padding: 10px 13px;
+    margin-bottom: 16px;
+    line-height:1.5;
+  }
+
+  .question{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 20px;
+    line-height:1.35;
+  }
+
+  .options{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  button.opt{
+    flex: 1 1 auto;
+    min-width: 130px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 13px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, transform .1s ease;
+  }
+  button.opt:hover{
+    border-color: var(--amber);
+    background: #252a34;
+  }
+  button.opt:active{ transform: scale(0.98); }
+  button.opt:focus-visible{
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
+
+  /* result */
+  .result{
+    text-align:left;
+  }
+  .result-badge{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .badge-go{ background: var(--green-dim); color: #a9d9bb; border:1px solid var(--green); }
+  .badge-stop{ background: var(--red-dim); color: #ecb6b7; border:1px solid var(--red); }
+  .badge-wait{ background: var(--amber-dim); color: #f0cf9c; border:1px solid var(--amber); }
+
+  .result h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 24px;
+    margin: 0 0 10px;
+  }
+  .result p{
+    color: var(--muted);
+    font-size: 14.5px;
+    line-height: 1.6;
+    margin: 0 0 22px;
+  }
+
+  .restart{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .restart:hover{ color: var(--text); border-color: var(--muted); }
+
+  footer{
+    margin-top: 26px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: #555c6a;
+    text-align:center;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Compute Scaling · Decision Path</div>
+    <h1>Should I scale this VM?</h1>
+    <div class="sub">Answer a few questions about the VM's status in Turbonomic and Dynatrace. Each answer narrows the path to a single recommendation.</div>
+  </header>
+
+  <div id="trail" class="trail"></div>
+  <div id="card" class="card"></div>
+
+  <footer>Based on the server compute scale-up workflow</footer>
+</div>
+
+<script>
+const TREE = {
+  isBrainware: {
+    tag: "Step 1 · Server Type",
+    info: null,
+    question: "Is this a Brainware server?",
+    options: [
+      { label: "Yes", next: "END_brainware" },
+      { label: "No", next: "vmExists" }
+    ]
+  },
+  vmExists: {
+    tag: "Step 2 · Turbonomic",
+    info: null,
+    question: "Does the VM exist in Turbonomic?",
+    options: [
+      { label: "Yes", next: "recommendedAction" },
+      { label: "No", next: "frequentAlerts" }
+    ]
+  },
+  recommendedAction: {
+    tag: "Step 3 · Turbonomic",
+    info: "Check Turbonomic for the recommended action on this VM.",
+    question: "Does a recommended action exist?",
+    options: [
+      { label: "Yes", next: "hostedWhere" },
+      { label: "No", next: "tshirtGuidance" }
+    ]
+  },
+  tshirtGuidance: {
+    tag: "Step 4 · Sizing",
+    info: null,
+    question: "How do the VM's current resources compare to T-shirt size guidance?",
+    options: [
+      { label: "Under guidance", next: "END_scaleUp" },
+      { label: "Over guidance", next: "frequentAlerts" }
+    ]
+  },
+  hostedWhere: {
+    tag: "Step 4 · Platform",
+    info: null,
+    question: "Is the VM hosted in AWS or VMware?",
+    options: [
+      { label: "AWS", next: "END_downtime" },
+      { label: "VMware", next: "END_executeNow" }
+    ]
+  },
+  frequentAlerts: {
+    tag: "Step · Dynatrace",
+    info: "Check Dynatrace for frequent alerts on this VM.",
+    question: "Are frequent alerts found?",
+    options: [
+      { label: "Yes", next: "vmTypeManaged" },
+      { label: "No", next: "END_doNotScale" }
+    ]
+  },
+  vmTypeManaged: {
+    tag: "Step · Turbonomic",
+    info: null,
+    question: "Is the VM type fully managed by Turbonomic?",
+    options: [
+      { label: "Yes", next: "overridePolicy" },
+      { label: "No", next: "END_scaleUp" }
+    ]
+  },
+  overridePolicy: {
+    tag: "Step · Policy",
+    info: null,
+    question: "Is there an override policy attached?",
+    options: [
+      { label: "Yes", next: "END_scaleWithoutLimits" },
+      { label: "No", next: "END_doNotScale" }
+    ]
+  }
+};
+
+const RESULTS = {
+  brainware: {
+    badge: "See guide", badgeClass: "badge-wait",
+    title: "Consult the Brainware scaling guide",
+    desc: `Brainware servers follow their own scaling process. Refer to <a href="https://hyland.atlassian.net/wiki/x/qIFhMQ" target="_blank" rel="noopener noreferrer" style="color:#f0cf9c;">this Confluence page</a> for how to scale it appropriately.`
+  },
+  scaleUp: {
+    badge: "Go", badgeClass: "badge-go",
+    title: "Scale up the VM",
+    desc: "The VM is under T-shirt size guidance, or it isn't fully managed by Turbonomic. It's safe to proceed with scaling it up."
+  },
+  doNotScale: {
+    badge: "Hold", badgeClass: "badge-stop",
+    title: "Do not scale up",
+    desc: "There's no strong signal to justify scaling right now — either no frequent alerts were found, or there's no override policy attached to a fully-managed VM."
+  },
+  scaleWithoutLimits: {
+    badge: "Go", badgeClass: "badge-go",
+    title: "VM can be scaled without limits",
+    desc: "Frequent alerts, full Turbonomic management, and an attached override policy all line up — scale this VM freely."
+  },
+  downtime: {
+    badge: "Schedule", badgeClass: "badge-wait",
+    title: "Request a downtime window to make the change",
+    desc: "Turbonomic has a recommended action and the VM is hosted in AWS. Coordinate a downtime window before applying the change."
+  },
+  executeNow: {
+    badge: "Go", badgeClass: "badge-wait",
+    title: "Execute the action immediately",
+    desc: "Turbonomic has a recommended action and the VM is hosted in VMware. No downtime window is required — apply the change now."
+  }
+};
+RESULTS.executeNow.badgeClass = "badge-go";
+
+let path = [];
+let current = "isBrainware";
+
+function renderTrail(){
+  const el = document.getElementById('trail');
+  el.innerHTML = path.map(p => `
+    <div class="trail-item">
+      <div class="q">${p.question}</div>
+      <div class="a">${p.answer}</div>
+    </div>
+  `).join('');
+}
+
+function renderStep(){
+  const card = document.getElementById('card');
+  if(current.startsWith("END_")){
+    const key = current.replace("END_","");
+    const r = RESULTS[key];
+    card.innerHTML = `
+      <div class="result">
+        <span class="result-badge ${r.badgeClass}">${r.badge}</span>
+        <h2>${r.title}</h2>
+        <p>${r.desc}</p>
+        <button class="restart" onclick="restart()">↺ Start over</button>
+      </div>
+    `;
+    return;
+  }
+  const node = TREE[current];
+  card.innerHTML = `
+    <div class="step-tag">${node.tag}</div>
+    ${node.info ? `<div class="info-note">${node.info}</div>` : ``}
+    <div class="question">${node.question}</div>
+    <div class="options">
+      ${node.options.map((o,i) => `<button class="opt" data-i="${i}">${o.label}</button>`).join('')}
+    </div>
+  `;
+  card.querySelectorAll('.opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const opt = node.options[+btn.dataset.i];
+      path.push({ question: node.question, answer: opt.label });
+      current = opt.next;
+      renderTrail();
+      renderStep();
+    });
+  });
+}
+
+function restart(){
+  path = [];
+  current = "isBrainware";
+  renderTrail();
+  renderStep();
+}
+
+renderStep();
+</script>
+</body>
+</html>
